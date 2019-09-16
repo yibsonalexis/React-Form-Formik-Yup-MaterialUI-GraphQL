@@ -1,5 +1,5 @@
 # React-Form + Formik + Yup + MaterialUI +GraphQL
-![Screenshot](screenshot.png)
+![Screenshot](ScreenShot.png)
 This is a quick example of how to use form validations in React, using Formik and Yup as validations schema.
 
 We will use Material-UI to give it a touch of style next to the formik-material-ui package.
