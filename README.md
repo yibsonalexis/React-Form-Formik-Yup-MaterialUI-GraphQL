@@ -1,68 +1,193 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# React-Form + Formik + Yup + MaterialUI +GraphQL
+![Screenshot](screenshot.png)
+This is a quick example of how to use form validations in React, using Formik and Yup as validations schema.
 
-## Available Scripts
+We will use Material-UI to give it a touch of style next to the formik-material-ui package.
 
-In the project directory, you can run:
+This example allows us to integrate Material-UI to our forms already built in Formik without affecting their operation.
 
-### `npm start`
+Let's use GraphQL with Apollo Client to save our information
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Note: 
+To save the information of this example I make use of a tutorial created previously by me [here](https://github.com/yibsonalexis/sls-grapgQL-lambdaFunction-dynamoDB)
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+## Formik Form Validation - customerForm.js
+The CustomerForm component contains a registration form built with the `<Formik />` component. <br>
+The initial values of each field are defined in the `initialValues` property. <br>
+All validation rules and their respective error messages are set in the `validationSchema` property, which for this constraint we are using Yup to define our validation scheme. The `onSubmit` property receives the values of our field in addition to a `resetForm` property that allows us to reset the Form
 
-### `npm test`
+More information 
+- [Formik](https://jaredpalmer.com/formik/docs/tutorial)
+- [Yup](https://github.com/jquense/yup)
+- [formik-material-ui](https://github.com/stackworx/formik-material-ui)
+- [material-ui](https://material-ui.com/demos/text-fields/)
+- [Apollo GraphQL](https://www.apollographql.com/docs/react/essentials/get-started/)
 
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-### `npm run build`
 
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Import our Packages
+```
+import React from "react";
+import gql from "graphql-tag";
+import Button from "@material-ui/core/Button";
+import { Formik, Field, Form } from "formik";
+import { TextField } from "formik-material-ui";
+import * as Yup from "yup";
+import { useMutation } from "@apollo/react-hooks";
+import { GET_CUSTOMERS } from "./customers";
+```
+### We define the model of our mutation 
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+```
+const ADD_CUSTOMER = gql`
+  mutation CreateCustomer(
+    $FullName: String
+    $FirstName: String
+    $SecondName: String
+    $LastName: String
+  ) {
+    CreateCustomer(
+      FullName: $FullName
+      FirstName: $FirstName
+      SecondName: $SecondName
+      LastName: $LastName
+    )
+  }
+`;
+```
+### Define our copoment
+```
+export function CustomersForm() {
+  const [addCustomer, { data }] = useMutation(ADD_CUSTOMER, {
+    refetchQueries: [{ query: GET_CUSTOMERS }]
+  });
+  console.log(data);
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+  return (
+    <div id="customerForm">
+      <h3>ADD HUMAN</h3>
+      <Formik
+        initialValues={{
+          FirstName: "",
+          SecondName: "",
+          LastName: "",
+          Email: ""
+        }}
+        validationSchema={Yup.object().shape({
+          FirstName: Yup.string().required("First Name is required"),
+          SecondName: Yup.string().required("Second Name is required"),
+          LastName: Yup.string().required("Last Name is required"),
+          Email: Yup.string()
+            .email("Email is invalidd")
+            .required("Email is required")
+        })}
+        onSubmit={(fields, { resetForm }) => {
+          addCustomer({
+            variables: {
+              ...fields,
+              FullName: `${fields.FirstName}  ${fields.SecondName}  ${fields.LastName}`
+            }
+          });
+          resetForm();
+        }}
+        render={({ errors, status, touched }) => (
+          <Form>
+            <Field
+              label="First Name"
+              name="FirstName"
+              type="text"
+              component={TextField}
+              margin="none"
+              variant="outlined"
+              fullWidth
+            />
+            <Field
+              label="Second Name"
+              name="SecondName"
+              type="text"
+              component={TextField}
+              margin="normal"
+              variant="outlined"
+              fullWidth
+            />
+            <Field
+              label="Last Name"
+              name="LastName"
+              type="text"
+              component={TextField}
+              margin="normal"
+              variant="outlined"
+              fullWidth
+            />
+            <Field
+              label="Email"
+              name="Email"
+              type="text"
+              component={TextField}
+              margin="normal"
+              variant="outlined"
+              fullWidth
+            />
+            <Button type="submit" variant="outlined" color="primary">
+              Register
+            </Button>{" "}
+            <Button type="reset" variant="outlined" color="secondary">
+              Reset
+            </Button>
+          </Form>
+        )}
+      ></Formik>
+    </div>
+  );
+}
 
-### `npm run eject`
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## List of Humans - customers.js
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Import our Packages
+```
+import React from "react";
+import gql from "graphql-tag";
+import { useQuery } from "@apollo/react-hooks";
+import { Card } from "@material-ui/core";
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### We define the model of our Query 
+```
+export const GET_CUSTOMERS = gql`
+  {
+    Customers {
+      ID
+      FullName
+      SecondName
+      LastName
+      FirstName
+    }
+  }
+`;
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Define our copoment
+```
+export function Customers() {
+  const { loading, error, data } = useQuery(GET_CUSTOMERS, {
+    // pollInterval: 5000, //Call Function eache 5 seconds
+  });
 
-## Learn More
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p style={{ color: "red" }}> Error! ${error.message}`</p>;
+  return (
+    <div id="viewCustomers">
+      <h5>LIST OF HUMANS</h5>
+      {data.Customers.map((p, i) => (
+        <Card
+          key={i}
+          style={{ padding: "10px", margin: "5px" }}
+        >{`${p.FirstName}  ${p.SecondName} ${p.LastName}`}</Card>
+      ))}
+    </div>
+  );
+}
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+```
