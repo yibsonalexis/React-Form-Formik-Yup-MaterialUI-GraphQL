@@ -11,7 +11,7 @@
     "graphql": "^14.5.4",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
-    "react-scripts": "3.1.1",
+    "react-scripts": "5.0.1",
     "yup": "^0.27.0"
   },
   "scripts": {
